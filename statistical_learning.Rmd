@@ -1,0 +1,122 @@
+---
+title: "statistical learning"
+author: "Sitian Zhou"
+date: "2023-12-07"
+output: github_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(glmnet)
+
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = FALSE,
+	fig.width = 8, 
+  fig.height = 6,
+  out.width = "90%"
+)
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+```
+
+
+## LASSO
+
+```{r}
+set.seed(11)
+
+```
+
+
+```{r}
+bwt_df = 
+  read_csv("data/birthweight.csv") |> 
+  janitor::clean_names() |>
+  mutate(
+    babysex = as.factor(babysex),
+    babysex = fct_recode(babysex, "male" = "1", "female" = "2"),
+    frace = as.factor(frace),
+    frace = fct_recode(
+      frace, "white" = "1", "black" = "2", "asian" = "3", 
+      "puerto rican" = "4", "other" = "8"),
+    malform = as.logical(malform),
+    mrace = as.factor(mrace),
+    mrace = fct_recode(
+      mrace, "white" = "1", "black" = "2", "asian" = "3", 
+      "puerto rican" = "4")) |> 
+  sample_n(200)
+```
+
+
+```{r}
+x = model.matrix(bwt ~ ., bwt_df)[, -1]
+y = bwt_df |> pull(bwt)
+```
+
+
+```{r}
+lambda = 10^(seq(3, -2, -0.1))
+lasso_fit = 
+  glmnet(x, y, lambda = lambda)
+
+lasso_cv = 
+  cv.glmnet(x, y, lambda = lambda)
+lambda_opt = lasso_cv$lambda.min
+log(lambda_opt, 10)
+```
+
+Let's look at lasso results
+
+```{r}
+lasso_fit |> 
+  broom::tidy() |>
+  filter(step == 15)
+```
+
+```{r}
+lasso_fit |> 
+  broom::tidy() |>
+  select(term, lambda, estimate) |> 
+  filter(term != "(Intercept)") |> 
+  complete(term, lambda, fill = list(estimate = 0)) |> 
+  ggplot(aes(x = log(lambda, 10), y = estimate, color = term, group = term)) +
+  geom_path()
+```
+
+
+```{r}
+lasso_fit |> 
+  broom::tidy() |>
+  filter(step == 20)
+```
+
+Show the CV results
+```{r}
+lasso_cv |> 
+  broom::tidy() |> 
+  ggplot(aes(x = log(lambda, 10), y = estimate)) +
+  geom_point()
+```
+
+## Penguin
+
+
+
+
+
+
+
+
+
+
+
+
+
