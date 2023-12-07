@@ -121,3 +121,36 @@ lasso_cv |>
 <img src="statistical_learning_files/figure-gfm/unnamed-chunk-8-1.png" width="90%" />
 
 ## Penguin
+
+``` r
+library(palmerpenguins)
+
+data("penguins")
+
+penguins |> 
+  ggplot(aes(x = bill_length_mm, y = flipper_length_mm, color = species)) + 
+  geom_point()
+```
+
+<img src="statistical_learning_files/figure-gfm/unnamed-chunk-9-1.png" width="90%" />
+
+``` r
+penguins = 
+  penguins |> 
+  select(species, bill_length_mm, flipper_length_mm) |> 
+  drop_na()
+
+kmeans_fit = 
+  penguins |> 
+  select(-species) |> 
+  # standardize the axis
+  scale() |> 
+  kmeans(centers = 3)
+
+penguins |> 
+  broom::augment(kmeans_fit, data = _) |> 
+  ggplot(aes(x = bill_length_mm, y = flipper_length_mm, color = .cluster)) +
+  geom_point()
+```
+
+<img src="statistical_learning_files/figure-gfm/unnamed-chunk-9-2.png" width="90%" />
